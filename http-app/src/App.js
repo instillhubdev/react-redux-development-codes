@@ -1,8 +1,11 @@
 import React, { Component } from "react";
-import axios from 'axios';
+import { ToastContainer, toast } from "react-toastify";
+// ******** httpService is for setting the axios client to reach out to server
+import http from "./services/httpService";
+// ******** configModule is for configuring the common endpoint using which we wull make the request to the server
+import config from "./config.json";
+import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
-
-const apiEndPoint = 'https://jsonplaceholder.typicode.com/posts';
 
 class App extends Component {
   state = {
@@ -10,44 +13,48 @@ class App extends Component {
   };
 
   componentDidMount = async () => {
-      // In Modern Javascript we use the async await way of writing 
-      // the async code.
-      const { data: posts} = await axios.get(apiEndPoint);
-      this.setState({ posts: posts });
-    }
+    // In Modern Javascript we use the async await way of writing
+    // the async code.
+    const { data: posts } = await http.get(config.apiEndPoint);
+    this.setState({ posts: posts });
+  };
 
   handleAdd = async () => {
     console.log("Add");
     const { length: numberOfPosts } = this.state.posts;
     const post = {
-      _id : numberOfPosts+1,
-      title : 'This is a new post'
-    }
+      _id: numberOfPosts + 1,
+      title: "This is a new post"
+    };
     //Make the async call to server
-    const { data: newPost }= await axios.post(apiEndPoint,post);
-    const { id,title } = newPost;
-    alert(`The post with the given ${id} and the title ${title} has been created`);
+    const { data: newPost } = await http.post(config.apiEndPoint, post);
+    const { id, title } = newPost;
+    alert(
+      `The post with the given ${id} and the title ${title} has been created`
+    );
     const posts = this.state.posts.slice();
     posts.unshift(newPost);
     this.setState({ posts: posts });
+    toast.success("The post has successfully been added", { autoClose: 1500 });
   };
 
-  //Pessimistic update 
+  //Pessimistic update
   // 1.Server call first then the update of the UI
-  
+
   // Optimistic update
-  // 1. Update the UI first and then initiate the server call 
+  // 1. Update the UI first and then initiate the server call
 
-
-
-  handleUpdate = async (post) => {
-    console.log("Update",post);
-    post.title = 'This is updated';
-    const { data } = await axios.put(`${apiEndPoint}/${post.id}`,post);
+  handleUpdate = async post => {
+    console.log("Update", post);
+    post.title = "This is updated";
+    const { data } = await http.put(`${config.apiEndPoint}/${post.id}`, post);
     const posts = [...this.state.posts];
     const index = posts.indexOf(post);
-    posts[index] = Object.assign({},post);
+    posts[index] = Object.assign({}, post);
     this.setState({ posts: posts });
+    toast.success("The post has successfully been updated", {
+      autoClose: 1500
+    });
     console.log(data);
   };
 
@@ -58,9 +65,23 @@ class App extends Component {
     this.setState({ posts: posts });
     //Server call in OU
     try {
-      await axios.delete(`${apiEndPoint}/${post.id}`);
+      await http.delete(`${config.apiEndPoint}/${post.id}`);
+      toast.success("The post has successfully been deleted", {
+        autoClose: 1000
+      });
     } catch (ex) {
-      alert('Something went wrong!');
+      //Expected Errors (Api errors predict and return 404: not found
+      // 400: bad request). Client side errors
+      if (ex.response && ex.response.status === 404) {
+        toast.info("The post has already been deleted");
+      }
+
+      //Unexpected Errors
+      // Network down, server down, database down, bug in our application
+      // log them
+      // Display generic and friendly error message
+
+      toast.info("Something went wrong", { autoClose: 1500 });
       this.setState({ posts: originalPosts });
     }
   };
@@ -68,6 +89,7 @@ class App extends Component {
   render() {
     return (
       <React.Fragment>
+        <ToastContainer />
         <button className="btn btn-primary" onClick={this.handleAdd}>
           Add
         </button>
