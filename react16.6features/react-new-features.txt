@@ -1,0 +1,22 @@
+React 16.6 The New Features 
+
+This is the latest version for React
+
+React 16.6 
+
+It introduced three new features to its ecosystem 
+
+React.memo()        
+Optimising functional components 
+
+React.lazy() 
+Async loading of the components 
+
+static contextType  
+Accessing ContextAPI (Sharing data across components without
+passing props,this will make it easier to access the context 
+a bit easier)
+
+React.memo() 
+
+
